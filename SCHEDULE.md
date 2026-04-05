@@ -22,7 +22,7 @@ This phase proves that the developer can bridge the Python-C++ boundary at zero 
         - C++ hooks: `clang-format -i`, `clang-tidy`, `ctest --test-dir build --output-on-failure`
         - Note: Run `uv run pre-commit install` to activate. Hooks must pass before any commit lands.
     - [x] Configure ruff in `pyproject.toml`: enable rule sets `E`, `F`, `I` (isort), `UP` (pyupgrade), `NPY` (NumPy-specific).
-    - [ ] Configure strict mypy in `pyproject.toml` (`[tool.mypy]` with `strict = true`).
+    - [x] Configure strict mypy in `pyproject.toml` (`[tool.mypy]` with `strict = true`).
     - [x] Add a `.clang-format` file for C++ source formatting (`BasedOnStyle: Google`).
     - [x] Add a `.clang-tidy` config with `concurrency-*`, `google-*`, `performance-*`, `readability-*`, `bugprone-*`, `modernize-*` checks.
     - [x] Author the root `CMakeLists.txt` — `cmake_minimum_required(VERSION 3.16)`, `CMAKE_CXX_STANDARD 17`, `CMAKE_EXPORT_COMPILE_COMMANDS ON`, `FetchContent` for pybind11 (`v3.0.2`) and GoogleTest (`v1.17.0`).

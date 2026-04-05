@@ -9,13 +9,20 @@ This phase proves that the developer can bridge the Python-C++ boundary at zero 
 ---
 
 ## Day 0: Project Skeleton and Build Toolchain
-**Focus**: Modern CMake, FetchContent, Pybind11 discovery, Python virtual environment, project layout
+**Focus**: Modern CMake, FetchContent, Pybind11 discovery, uv project init, linting, pre-commit hooks
 **Load**: Level 2
 
 - **Tasks**:
     - [ ] Create the top-level directory layout: `src/` for C++ sources, `include/` for headers, `python/` for the driver script and tests, and `build/` (gitignored) for CMake artifacts.
-    - [ ] Initialize a Python virtual environment via `uv venv` and install dependencies with `uv pip install numpy pytest pytest-benchmark`.
-        - Note: Pin the NumPy version explicitly (e.g. `numpy>=1.24,<3`) so the ABI stays stable across rebuilds. Use `uv` for all Python package operations — not pip directly.
+    - [ ] Initialize the Python project with `uv init` (generates `pyproject.toml`, `.python-version`, `uv.lock`). Add dependencies via `uv add numpy` and `uv add --dev pytest pytest-benchmark`. Run `uv sync` to create the `.venv`.
+        - Note: Pin the NumPy version explicitly in `pyproject.toml` (e.g. `numpy>=1.24,<3`) so the ABI stays stable across rebuilds. Commit `uv.lock` for reproducible installs.
+    - [ ] Configure pre-commit hooks (`.pre-commit-config.yaml`):
+        - `trailing-whitespace`, `end-of-file-fixer`, `check-yaml`, `check-toml`
+        - Local hooks: `ruff check --fix`, `ruff format`, `mypy .` (all via `uv run`)
+        - Note: Run `uv run pre-commit install` to activate. Hooks must pass before any commit lands.
+    - [ ] Configure ruff in `pyproject.toml`: enable rule sets `E`, `F`, `I` (isort), `UP` (pyupgrade), `NPY` (NumPy-specific).
+    - [ ] Configure strict mypy in `pyproject.toml` (`[tool.mypy]` with `strict = true`).
+    - [ ] Add a `.clang-format` file for C++ source formatting (e.g. `BasedOnStyle: Google` or `LLVM`).
     - [ ] Author the root `CMakeLists.txt` — set `cmake_minimum_required` to 3.16+, set `CMAKE_CXX_STANDARD` to 17, and use `FetchContent` to pull `pybind11` from its GitHub release tag.
         - Note: Prefer `FetchContent_Declare` + `FetchContent_MakeAvailable` over git submodules — it keeps the repo clone shallow and avoids recursive-init footguns.
     - [ ] Add a minimal `src/module.cpp` containing a single `pybind11_add_module` target that exposes a no-op function returning a string literal.
@@ -147,3 +154,42 @@ This phase proves that the developer can bridge the Python-C++ boundary at zero 
     - [pytest-benchmark documentation](https://pytest-benchmark.readthedocs.io/) — Benchmark fixture for pytest. Read the **Usage** section for how to pass callables to `benchmark()` and how to interpret the output table (min, max, mean, stddev, rounds).
     - [Google Benchmark User Guide](https://google.github.io/benchmark/user_guide.html) — C++-side microbenchmark reference. Read **Passing Arguments** and **Multithreaded Benchmarks** if you want to add C++ benchmarks alongside the Python ones; otherwise use this as a mental model for rigorous benchmarking methodology.
     - [The N-dimensional array (ndarray) — NumPy Manual](https://numpy.org/doc/stable/reference/arrays.ndarray.html) — Memory layout reference. Re-read **Internal memory layout of an ndarray** and **Array attributes** — you will need `ctypes.data`, `__array_interface__`, `flags`, and `base` to write the zero-copy assertions.
+
+---
+
+## Day 4: DevOps & Delivery
+**Focus**: GitHub Actions CI, Makefile, build automation, lint enforcement
+**Load**: Level 3
+
+- **Objectives**:
+    1. Every push and PR to `main` triggers automated lint, type-check, build, and test.
+    2. The entire build-test cycle is reproducible via a single `make` target.
+
+- **Tasks**:
+
+    **CI Pipeline (GitHub Actions)**
+    - [ ] Create `.github/workflows/ci.yml`:
+        - Trigger on push and PR to `main`.
+        - Job 1 — **Lint & Type Check**: `uv sync`, `uv run ruff check`, `uv run ruff format --check`, `uv run mypy python/`.
+        - Job 2 — **Build & Test**: `cmake -B build && cmake --build build`, then `uv run pytest python/ -v`.
+        - Note: Install system dependencies (`cmake`, `g++`) in the runner before the build step.
+    - [ ] Add CI status badge to `README.md`.
+
+    **Makefile**
+    - [ ] Write a `Makefile` with common targets:
+        - `make build` — `cmake -B build && cmake --build build`.
+        - `make test` — `uv run pytest python/ -v`.
+        - `make bench` — `uv run pytest python/test_bench.py -v --benchmark-enable`.
+        - `make lint` — `uv run ruff check && uv run ruff format --check && uv run mypy python/`.
+        - `make clean` — `rm -rf build/`.
+        - `make validate` — `uv run python python/run_validation.py`.
+    - [ ] Update `README.md` with quick start: prerequisites, `uv sync`, `make build`, `make test`.
+
+- **Acceptance Criteria**:
+    - Pushing to `main` triggers CI; all jobs pass green.
+    - `make build && make test` succeeds on a clean clone after only `uv sync`.
+    - `make lint` catches a deliberate formatting violation and exits non-zero.
+
+- **Resources**:
+    - [GitHub Actions Workflow Syntax](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions) — Reference for workflow triggers, jobs, and steps. Read **Events that trigger workflows** for `push`/`pull_request` config and **Using jobs in a workflow** for multi-job setup.
+    - [CMake GitHub Actions Setup](https://github.com/lukka/get-cmake) — Action for installing CMake in CI runners. Use this if the runner's default CMake is too old for your `cmake_minimum_required`.

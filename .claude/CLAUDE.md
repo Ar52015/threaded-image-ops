@@ -23,13 +23,16 @@ The compiled `.so` lands in `build/`. To import from Python, either run scripts 
 
 ## Python Environment
 
-Uses `uv` for environment and package management.
+Uses `uv` with `pyproject.toml` and `uv.lock` for dependency management.
 
 ```bash
-# Create venv and install deps
-uv venv && uv pip install numpy pytest pytest-benchmark
+# Install all deps (creates .venv automatically)
+uv sync
 
-# Run scripts through uv
+# Add a new dependency
+uv add <package>
+
+# Run scripts
 uv run python python/bench.py
 ```
 

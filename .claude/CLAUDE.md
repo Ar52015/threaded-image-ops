@@ -21,23 +21,35 @@ rm -rf build && cmake -B build && cmake --build build
 
 The compiled `.so` lands in `build/`. To import from Python, either run scripts from the build directory or ensure it's on `PYTHONPATH`.
 
+## Python Environment
+
+Uses `uv` for environment and package management.
+
+```bash
+# Create venv and install deps
+uv venv && uv pip install numpy pytest pytest-benchmark
+
+# Run scripts through uv
+uv run python python/bench.py
+```
+
 ## Test Commands
 
 ```bash
 # Run all tests
-pytest python/ -v
+uv run pytest python/ -v
 
 # Run a single test file
-pytest python/test_zerocopy.py -v
+uv run pytest python/test_zerocopy.py -v
 
 # Run benchmarks
-pytest python/test_bench.py -v --benchmark-enable
+uv run pytest python/test_bench.py -v --benchmark-enable
 
 # Manual benchmark
-python python/bench.py
+uv run python python/bench.py
 
 # Full acceptance validation
-python python/run_validation.py
+uv run python python/run_validation.py
 ```
 
 ## Architecture

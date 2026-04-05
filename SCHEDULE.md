@@ -14,12 +14,12 @@ This phase proves that the developer can bridge the Python-C++ boundary at zero 
 
 - **Tasks**:
     - [ ] Create the top-level directory layout: `src/` for C++ sources, `include/` for headers, `python/` for the driver script and tests, and `build/` (gitignored) for CMake artifacts.
-    - [ ] Initialize a Python virtual environment at the project root and install `numpy` and `pytest` into it.
-        - Note: Pin the NumPy version explicitly (e.g. `numpy>=1.24,<3`) so the ABI stays stable across rebuilds.
+    - [ ] Initialize a Python virtual environment via `uv venv` and install dependencies with `uv pip install numpy pytest pytest-benchmark`.
+        - Note: Pin the NumPy version explicitly (e.g. `numpy>=1.24,<3`) so the ABI stays stable across rebuilds. Use `uv` for all Python package operations — not pip directly.
     - [ ] Author the root `CMakeLists.txt` — set `cmake_minimum_required` to 3.16+, set `CMAKE_CXX_STANDARD` to 17, and use `FetchContent` to pull `pybind11` from its GitHub release tag.
         - Note: Prefer `FetchContent_Declare` + `FetchContent_MakeAvailable` over git submodules — it keeps the repo clone shallow and avoids recursive-init footguns.
     - [ ] Add a minimal `src/module.cpp` containing a single `pybind11_add_module` target that exposes a no-op function returning a string literal.
-    - [ ] Verify the full build-import cycle: run `cmake -B build && cmake --build build`, then from the virtual environment run `python -c "import <module>; print(<module>.noop())"` and confirm the string prints.
+    - [ ] Verify the full build-import cycle: run `cmake -B build && cmake --build build`, then `uv run python -c "import <module>; print(<module>.noop())"` and confirm the string prints.
     - [ ] Add `build/`, `*.so`, `__pycache__/`, and `.venv/` to `.gitignore`.
 
 ---
@@ -54,7 +54,7 @@ This phase proves that the developer can bridge the Python-C++ boundary at zero 
     - [ ] Assert `buf.height == 4096`, `buf.width == 4096`, `buf.channels == 3`.
 
 - **Acceptance Criteria**:
-    - `python python/test_zerocopy.py` exits 0 and prints no assertion errors.
+    - `uv run python python/test_zerocopy.py` exits 0 and prints no assertion errors.
     - The `data_ptr()` returned by the C++ side is byte-identical to `ndarray.ctypes.data` on the Python side — proving no intermediate copy was allocated.
     - Passing a 2D array (`np.zeros((100, 100))`) raises a Python `ValueError` originating from the C++ `std::invalid_argument`.
 
@@ -138,9 +138,9 @@ This phase proves that the developer can bridge the Python-C++ boundary at zero 
     - [ ] The script must exit with code 0 only if every check passes.
 
 - **Acceptance Criteria**:
-    - `pytest python/ -v` passes all tests with zero failures.
-    - `python python/bench.py` prints a measurable speedup (>1x) for the C++ threaded path over the Python baseline on an 8192x8192 image.
-    - `python python/run_validation.py` prints `PASS` for all checks: pointer stability, pixel correctness, double-inversion idempotency, and dimension integrity.
+    - `uv run pytest python/ -v` passes all tests with zero failures.
+    - `uv run python python/bench.py` prints a measurable speedup (>1x) for the C++ threaded path over the Python baseline on an 8192x8192 image.
+    - `uv run python python/run_validation.py` prints `PASS` for all checks: pointer stability, pixel correctness, double-inversion idempotency, and dimension integrity.
     - No test allocates a second array of the same size — memory high-water mark stays at ~1x the input payload (verify via `tracemalloc` or `/proc/self/status` VmRSS).
 
 - **Resources**:

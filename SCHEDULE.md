@@ -21,14 +21,16 @@ This phase proves that the developer can bridge the Python-C++ boundary at zero 
         - Local hooks: `ruff check --fix`, `ruff format`, `mypy .`, `pytest --cov` (all via `uv run`)
         - C++ hooks: `clang-format -i`, `clang-tidy`, `ctest --test-dir build --output-on-failure`
         - Note: Run `uv run pre-commit install` to activate. Hooks must pass before any commit lands.
-    - [ ] Configure ruff in `pyproject.toml`: enable rule sets `E`, `F`, `I` (isort), `UP` (pyupgrade), `NPY` (NumPy-specific).
+    - [x] Configure ruff in `pyproject.toml`: enable rule sets `E`, `F`, `I` (isort), `UP` (pyupgrade), `NPY` (NumPy-specific).
     - [ ] Configure strict mypy in `pyproject.toml` (`[tool.mypy]` with `strict = true`).
-    - [ ] Add a `.clang-format` file for C++ source formatting (e.g. `BasedOnStyle: Google` or `LLVM`).
-    - [ ] Author the root `CMakeLists.txt` — set `cmake_minimum_required` to 3.16+, set `CMAKE_CXX_STANDARD` to 17, and use `FetchContent` to pull `pybind11` and `googletest` from their GitHub release tags.
-        - Note: Prefer `FetchContent_Declare` + `FetchContent_MakeAvailable` over git submodules — it keeps the repo clone shallow and avoids recursive-init footguns.
-    - [ ] Add a minimal `src/module.cpp` containing a single `pybind11_add_module` target that exposes a no-op function returning a string literal.
-    - [ ] Verify the full build-import cycle: run `cmake -B build && cmake --build build`, then `uv run python -c "import <module>; print(<module>.noop())"` and confirm the string prints.
-    - [x] Add `build/`, `*.so`, `__pycache__/`, and `.venv/` to `.gitignore`.
+    - [x] Add a `.clang-format` file for C++ source formatting (`BasedOnStyle: Google`).
+    - [x] Add a `.clang-tidy` config with `concurrency-*`, `google-*`, `performance-*`, `readability-*`, `bugprone-*`, `modernize-*` checks.
+    - [x] Author the root `CMakeLists.txt` — `cmake_minimum_required(VERSION 3.16)`, `CMAKE_CXX_STANDARD 17`, `CMAKE_EXPORT_COMPILE_COMMANDS ON`, `FetchContent` for pybind11 (`v3.0.2`) and GoogleTest (`v1.17.0`).
+    - [x] Add a minimal `src/module.cpp` with `PYBIND11_MODULE` entry point exposing a `noop()` function returning a string literal.
+    - [x] Add stub `src/transforms.cpp` and test files in `tests/` (`test_transform_quadrant.cpp`, `test_quadrant_partitioning.cpp`, `test_thread_safety.cpp`).
+    - [x] Verify the full build-import cycle: `cmake -B build && cmake --build build`, then `PYTHONPATH=build uv run python -c "import threaded_image_ops; print(threaded_image_ops.noop())"` prints `hello from C++`.
+    - [x] Symlink `compile_commands.json` to project root (`ln -s build/compile_commands.json .`) for clang-tidy LSP support.
+    - [x] Add `build/`, `*.so`, `__pycache__/`, `.venv/`, and `compile_commands.json` to `.gitignore`.
 
 ---
 

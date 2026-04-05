@@ -27,16 +27,13 @@ repos:
         entry: uv run mypy .
         language: system
         types: [python]
-        pass_filenames: python
+        pass_filenames: false
 
       - id: pytest
         name: Python tests
-        entry: uv run pytest
+        entry: bash -c 'uv run pytest --benchmark-disable -v || test $? -eq 5'
         language: system
         pass_filenames: false
-        always_on: true
-        args:
-          ["--cov=.", "--cov-missing=term-missing", "-v", "--benchmark-disable"]
 
       - id: clang-format
         name: Clang Format

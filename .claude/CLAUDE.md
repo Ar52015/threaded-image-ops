@@ -19,7 +19,7 @@ cmake -B build -DCMAKE_CXX_FLAGS="-fsanitize=thread" && cmake --build build
 rm -rf build && cmake -B build && cmake --build build
 ```
 
-The compiled `.so` lands in `build/`. To import from Python, either run scripts from the build directory or ensure it's on `PYTHONPATH`.
+The compiled `.so` lands in `build/`. Import from Python with `PYTHONPATH=build uv run python ...`.
 
 ## Python Environment
 
